@@ -16,24 +16,28 @@
 
 package com.google.jetstream.presentation.screens.videoPlayer.components
 
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.google.jetstream.R
 import com.google.jetstream.data.util.StringConstants
 import kotlin.time.Duration
 
 @Composable
 fun VideoPlayerSeeker(
-    focusRequester: FocusRequester,
+    focusRequesterSeeker: FocusRequester,
     state: VideoPlayerState,
     isPlaying: Boolean,
-    onPlayPauseToggle: (Boolean) -> Unit,
     onSeek: (Float) -> Unit,
     contentProgress: Duration,
     contentDuration: Duration
@@ -59,22 +63,33 @@ fun VideoPlayerSeeker(
         verticalAlignment = Alignment.CenterVertically
     ) {
         VideoPlayerControlsIcon(
-            modifier = Modifier.focusRequester(focusRequester),
-            icon = if (!isPlaying) Icons.Default.PlayArrow else Icons.Default.Pause,
-            onClick = { onPlayPauseToggle(!isPlaying) },
+            modifier = Modifier
+                .focusable(enabled = false)
+                .padding(end = 20.dp)
+                .size(width = 13.dp, height = 20.dp),
+            icon = if (isPlaying) R.drawable.ic_pause_button else R.drawable.ic_play_button,
             state = state,
             isPlaying = isPlaying,
             contentDescription = StringConstants
                 .Composable
                 .VideoPlayerControlPlayPauseButton
         )
-        VideoPlayerControllerText(text = contentProgressString)
+
         VideoPlayerControllerIndicator(
+            modifier = Modifier.focusRequester(focusRequesterSeeker),
             progress = (contentProgress / contentDuration).toFloat(),
             onSeek = onSeek,
             state = state
         )
-        VideoPlayerControllerText(text = contentDurationString)
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier.fillMaxWidth().padding(top = 18.dp)
+    ) {
+        VideoPlayerControllerText(text = contentProgressString, Color.White.copy(alpha = 0.9f))
+        VideoPlayerControllerText(text = "/", color = Color.White.copy(alpha = 0.3f))
+        VideoPlayerControllerText(text = contentDurationString, color = Color.White.copy(alpha = 0.7f))
     }
 }
 

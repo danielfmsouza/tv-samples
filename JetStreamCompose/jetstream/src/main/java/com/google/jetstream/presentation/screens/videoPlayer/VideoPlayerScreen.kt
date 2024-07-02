@@ -24,10 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesomeMotion
-import androidx.compose.material.icons.filled.ClosedCaption
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -51,6 +49,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
+import com.google.jetstream.R
 import com.google.jetstream.data.entities.MovieDetails
 import com.google.jetstream.data.util.StringConstants
 import com.google.jetstream.presentation.common.Error
@@ -61,16 +60,13 @@ import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPla
 import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPlayerMediaTitleType
 import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPlayerOverlay
 import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPlayerPulse
-import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPlayerPulse.Type.BACK
-import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPlayerPulse.Type.FORWARD
-import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPlayerPulseState
 import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPlayerSeeker
 import com.google.jetstream.presentation.screens.videoPlayer.components.VideoPlayerState
 import com.google.jetstream.presentation.screens.videoPlayer.components.rememberVideoPlayerPulseState
 import com.google.jetstream.presentation.screens.videoPlayer.components.rememberVideoPlayerState
 import com.google.jetstream.presentation.utils.handleDPadKeyEvents
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 object VideoPlayerScreen {
     const val MovieIdBundleKey = "movieId"
@@ -149,14 +145,33 @@ fun VideoPlayerScreenContent(movieDetails: MovieDetails, onBackPressed: () -> Un
 
     BackHandler(onBack = onBackPressed)
 
+    var isCcOn by remember { mutableStateOf(false) }
     val pulseState = rememberVideoPlayerPulseState()
+    val focusRequesterCcButton = remember { FocusRequester() }
+    val focusRequesterSeeker = remember { FocusRequester() }
+    val onPressLeftOrRight = focusButton(focusRequester = focusRequesterSeeker, videoPlayerState)
+    val onPlayPauseToggle = { shouldPlay: Boolean ->
+        if (shouldPlay) {
+            exoPlayer.play()
+        } else {
+            exoPlayer.pause()
+        }
+    }
+    val onPressEnter = {
+        if (videoPlayerState.controlsVisible) {
+            onPlayPauseToggle.invoke(!isPlaying)
+        }
+        videoPlayerState.showControls()
+    }
 
     Box(
         Modifier
-            .dPadEvents(
-                exoPlayer,
-                videoPlayerState,
-                pulseState
+            .handleDPadKeyEvents(
+                onEnter = onPressEnter,
+                onLeft = onPressLeftOrRight,
+                onRight = onPressLeftOrRight,
+                onDown = { videoPlayerState.showControls() },
+                onUp = focusButton(focusRequester = focusRequesterCcButton, videoPlayerState)
             )
             .focusable()
     ) {
@@ -167,23 +182,23 @@ fun VideoPlayerScreenContent(movieDetails: MovieDetails, onBackPressed: () -> Un
             update = { it.player = exoPlayer },
             onRelease = { exoPlayer.release() }
         )
-
-        val focusRequester = remember { FocusRequester() }
         VideoPlayerOverlay(
             modifier = Modifier.align(Alignment.BottomCenter),
-            focusRequester = focusRequester,
             state = videoPlayerState,
             isPlaying = isPlaying,
             centerButton = { VideoPlayerPulse(pulseState) },
             subtitles = { /* TODO Implement subtitles */ },
             controls = {
                 VideoPlayerControls(
-                    movieDetails,
-                    isPlaying,
-                    contentCurrentPosition,
-                    exoPlayer,
-                    videoPlayerState,
-                    focusRequester
+                    movieDetails = movieDetails,
+                    isPlaying = isPlaying,
+                    isCcOn = isCcOn,
+                    onToggleCcButton = { isCcOn = it },
+                    contentCurrentPosition = contentCurrentPosition,
+                    exoPlayer = exoPlayer,
+                    state = videoPlayerState,
+                    focusRequesterCcButton = focusRequesterCcButton,
+                    focusRequesterSeeker = focusRequesterSeeker
                 )
             }
         )
@@ -194,67 +209,52 @@ fun VideoPlayerScreenContent(movieDetails: MovieDetails, onBackPressed: () -> Un
 fun VideoPlayerControls(
     movieDetails: MovieDetails,
     isPlaying: Boolean,
+    isCcOn: Boolean,
+    onToggleCcButton: (Boolean) -> Unit,
     contentCurrentPosition: Long,
     exoPlayer: ExoPlayer,
     state: VideoPlayerState,
-    focusRequester: FocusRequester
+    focusRequesterCcButton: FocusRequester,
+    focusRequesterSeeker: FocusRequester
 ) {
-    val onPlayPauseToggle = { shouldPlay: Boolean ->
-        if (shouldPlay) {
-            exoPlayer.play()
-        } else {
-            exoPlayer.pause()
-        }
-    }
-
     VideoPlayerMainFrame(
         mediaTitle = {
             VideoPlayerMediaTitle(
                 title = movieDetails.name,
                 secondaryText = movieDetails.releaseDate,
                 tertiaryText = movieDetails.director,
+                classification = movieDetails.pgRating,
                 type = VideoPlayerMediaTitleType.DEFAULT
             )
         },
         mediaActions = {
             Row(
-                modifier = Modifier.padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.padding(bottom = 0.dp),
+                verticalAlignment = Alignment.Bottom
             ) {
                 VideoPlayerControlsIcon(
-                    icon = Icons.Default.AutoAwesomeMotion,
-                    state = state,
-                    isPlaying = isPlaying,
-                    contentDescription = StringConstants
-                        .Composable
-                        .VideoPlayerControlPlaylistButton
-                )
-                VideoPlayerControlsIcon(
-                    modifier = Modifier.padding(start = 12.dp),
-                    icon = Icons.Default.ClosedCaption,
+                    modifier = Modifier
+                        .padding(start = 12.dp)
+                        .size(width = 22.dp, height = 19.dp)
+                        .focusRequester(focusRequesterCcButton)
+                        .handleDPadKeyEvents(
+                            onDown = { focusRequesterSeeker.requestFocus() }
+                        ),
+                    onClick = { onToggleCcButton(!isCcOn) },
+                    icon = if (isCcOn) R.drawable.ic_cc_on else R.drawable.ic_cc_off,
                     state = state,
                     isPlaying = isPlaying,
                     contentDescription = StringConstants
                         .Composable
                         .VideoPlayerControlClosedCaptionsButton
                 )
-                VideoPlayerControlsIcon(
-                    modifier = Modifier.padding(start = 12.dp),
-                    icon = Icons.Default.Settings,
-                    state = state,
-                    isPlaying = isPlaying,
-                    contentDescription = StringConstants
-                        .Composable
-                        .VideoPlayerControlSettingsButton
-                )
             }
         },
         seeker = {
             VideoPlayerSeeker(
-                focusRequester,
-                state,
-                isPlaying,
-                onPlayPauseToggle,
+                focusRequesterSeeker = focusRequesterSeeker,
+                state = state,
+                isPlaying = isPlaying,
                 onSeek = { exoPlayer.seekTo(exoPlayer.duration.times(it).toLong()) },
                 contentProgress = contentCurrentPosition.milliseconds,
                 contentDuration = exoPlayer.duration.milliseconds
@@ -281,27 +281,14 @@ private fun rememberExoPlayer(context: Context) = remember {
         }
 }
 
-private fun Modifier.dPadEvents(
-    exoPlayer: ExoPlayer,
-    videoPlayerState: VideoPlayerState,
-    pulseState: VideoPlayerPulseState
-): Modifier = this.handleDPadKeyEvents(
-    onLeft = {
-        if (!videoPlayerState.controlsVisible) {
-            exoPlayer.seekBack()
-            pulseState.setType(BACK)
+private fun focusButton(
+    focusRequester: FocusRequester,
+    videoPlayerState: VideoPlayerState
+): () -> Unit =
+    {
+        if (videoPlayerState.controlsVisible) {
+            focusRequester.requestFocus()
         }
-    },
-    onRight = {
-        if (!videoPlayerState.controlsVisible) {
-            exoPlayer.seekForward()
-            pulseState.setType(FORWARD)
-        }
-    },
-    onUp = { videoPlayerState.showControls() },
-    onDown = { videoPlayerState.showControls() },
-    onEnter = {
-        exoPlayer.pause()
         videoPlayerState.showControls()
     }
-)
+

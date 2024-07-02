@@ -17,21 +17,28 @@
 package com.google.jetstream.presentation.screens.videoPlayer.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
@@ -47,6 +54,7 @@ fun VideoPlayerMediaTitle(
     title: String,
     secondaryText: String,
     tertiaryText: String,
+    classification: String,
     modifier: Modifier = Modifier,
     type: VideoPlayerMediaTitleType = VideoPlayerMediaTitleType.DEFAULT
 ) {
@@ -56,9 +64,9 @@ fun VideoPlayerMediaTitle(
         append(tertiaryText)
     }
     Column(modifier.fillMaxWidth()) {
-        Text(title, style = MaterialTheme.typography.headlineMedium)
+        VideoPlayerControllerText(text = subTitle, color = Color(0xCCFFFFFF))
         Spacer(Modifier.height(4.dp))
-        Row {
+        Row(modifier = Modifier.height(22.dp)) {
             // TODO: Replaced with Badge component once developed
             when (type) {
                 VideoPlayerMediaTitleType.AD -> {
@@ -91,11 +99,33 @@ fun VideoPlayerMediaTitle(
                 VideoPlayerMediaTitleType.DEFAULT -> {}
             }
 
-            Text(
-                text = subTitle,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.alignByBaseline()
-            )
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier
+                        .background(
+                            shape = RoundedCornerShape(size = 3.dp),
+                            brush = Brush.verticalGradient(
+                                startY = Float.POSITIVE_INFINITY,
+                                endY = 0f,
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0f),
+                                    Color.White.copy(alpha = 0.25f),
+                                )
+                            )
+                        )
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .fillMaxHeight()
+                            .wrapContentHeight(align = Alignment.CenterVertically),
+                        text = classification,
+                        color = Color.White,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
         }
     }
 }
@@ -110,6 +140,7 @@ private fun VideoPlayerMediaTitlePreviewSeries() {
                 title = "True Detective",
                 secondaryText = "S1E5",
                 tertiaryText = "The Secret Fate Of All Life",
+                classification = "MA15+",
                 type = VideoPlayerMediaTitleType.DEFAULT
             )
         }
@@ -126,6 +157,7 @@ private fun VideoPlayerMediaTitlePreviewLive() {
                 title = "MacLaren Reveal Their 2022 Car: The MCL36",
                 secondaryText = "Formula 1",
                 tertiaryText = "54K watching now",
+                classification = "PG",
                 type = VideoPlayerMediaTitleType.LIVE
             )
         }
@@ -142,6 +174,7 @@ private fun VideoPlayerMediaTitlePreviewAd() {
                 title = "Samsung Galaxy Note20 | Ultra 5G",
                 secondaryText = "Get the most powerful Note yet",
                 tertiaryText = "",
+                classification = "PG",
                 type = VideoPlayerMediaTitleType.AD
             )
         }
