@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
@@ -63,12 +64,9 @@ fun VideoPlayerMediaTitle(
         append(tertiaryText)
     }
     Column(modifier.fillMaxWidth()) {
-        Text(
-            text = subTitle,
-            style = MaterialTheme.typography.bodyLarge
-        )
+        VideoPlayerControllerText(text = subTitle, color = Color(0xCCFFFFFF))
         Spacer(Modifier.height(4.dp))
-        Row(modifier = Modifier.height(35.dp)) {
+        Row(modifier = Modifier.height(22.dp)) {
             // TODO: Replaced with Badge component once developed
             when (type) {
                 VideoPlayerMediaTitleType.AD -> {
@@ -101,10 +99,9 @@ fun VideoPlayerMediaTitle(
                 VideoPlayerMediaTitleType.DEFAULT -> {}
             }
 
-            Text(title, style = MaterialTheme.typography.headlineMedium)
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
             Spacer(modifier = Modifier.width(12.dp))
                 Box(
-                    contentAlignment = Alignment.BottomStart,
                     modifier = Modifier
                         .background(
                             shape = RoundedCornerShape(size = 3.dp),
@@ -125,6 +122,7 @@ fun VideoPlayerMediaTitle(
                             .wrapContentHeight(align = Alignment.CenterVertically),
                         text = classification,
                         color = Color.White,
+                        fontSize = 10.5.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }

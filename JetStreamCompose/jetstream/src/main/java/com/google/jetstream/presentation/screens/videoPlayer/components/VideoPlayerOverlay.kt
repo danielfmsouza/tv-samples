@@ -86,7 +86,7 @@ fun VideoPlayerOverlay(
             ) {
                 Column(
                     modifier = Modifier
-                        .padding(horizontal = 56.dp)
+                        .padding(horizontal = 44.dp)
                         .padding(bottom = 32.dp, top = 8.dp)
                 ) {
                     controls()

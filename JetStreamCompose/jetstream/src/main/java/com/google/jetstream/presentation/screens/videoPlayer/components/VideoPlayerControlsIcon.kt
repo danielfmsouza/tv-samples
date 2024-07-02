@@ -16,9 +16,11 @@
 
 package com.google.jetstream.presentation.screens.videoPlayer.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -27,11 +29,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
+import androidx.tv.material3.IconButton
 import androidx.tv.material3.LocalContentColor
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
@@ -42,7 +49,7 @@ fun VideoPlayerControlsIcon(
     modifier: Modifier = Modifier,
     state: VideoPlayerState,
     isPlaying: Boolean,
-    icon: ImageVector,
+    @DrawableRes icon: Int,
     contentDescription: String? = null,
     onClick: () -> Unit = {}
 ) {
@@ -54,24 +61,20 @@ fun VideoPlayerControlsIcon(
             state.showControls()
         }
     }
-
-    Surface(
-        modifier = modifier.size(40.dp),
+    IconButton(
         onClick = onClick,
-        shape = ClickableSurfaceDefaults.shape(shape = CircleShape),
-        colors = ClickableSurfaceDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+        shape = ButtonDefaults.shape(RectangleShape),
+        colors = ButtonDefaults.colors(
+            containerColor = Color.Transparent,
+            contentColor = Color.White.copy(alpha = 0.65f),
+            focusedContainerColor = Color.Transparent,
+            focusedContentColor = Color.White
         ),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
-        interactionSource = interactionSource
+        modifier = modifier
     ) {
         Icon(
-            icon,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            contentDescription = contentDescription,
-            tint = LocalContentColor.current
+            painter = painterResource(id = icon),
+            contentDescription = contentDescription
         )
     }
 }

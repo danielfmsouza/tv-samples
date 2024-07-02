@@ -49,7 +49,7 @@ fun VideoPlayerMainFrame(
             Box(Modifier.weight(1f)) { mediaTitle() }
             mediaActions()
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(22.dp))
         seeker()
         if (more != null) {
             Spacer(Modifier.height(12.dp))
@@ -76,7 +76,7 @@ private fun MediaPlayerMainFramePreviewLayout() {
         mediaActions = {
             Box(
                 Modifier
-                    .border(2.dp, Color.Red)
+                    .border(2.dp, Color.Green)
                     .background(Color.LightGray)
                     .size(196.dp, 40.dp)
             )
